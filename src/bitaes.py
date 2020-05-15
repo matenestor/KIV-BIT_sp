@@ -2,11 +2,9 @@ import sys
 from hashlib import md5
 
 import tables
-from tables import SBOX, RCON
-import encrypt
+from tables import MTX_M, BLOCK_SIZE, SBOX, RCON
 from encrypt import aes_encrypt
 
-MTX_M = 4
 ROUNDS = 9
 
 
@@ -61,9 +59,19 @@ def expand_key(key):
 
 
 def run(file_plain, file_cipher, expanded_key):
-    pass
-    # TODO feeding aes with plain blocks from file
-    # TODO saving ciphered block to file_cipher
+    block = file_plain.read(BLOCK_SIZE)
+
+    while len(block) == BLOCK_SIZE:
+        # encryption of middle blocks
+        enc_block = aes_encrypt(block, expanded_key, ROUNDS)
+        file_cipher.write(enc_block)
+        block = file_plain.read(BLOCK_SIZE)
+
+    if len(block) % BLOCK_SIZE != 0 and len(block) != 0:
+        block += bytes(BLOCK_SIZE - len(block))
+        # encryption of final block
+        enc_block = aes_encrypt(block, expanded_key, ROUNDS)
+        file_cipher.write(enc_block)
 
 
 def main(fn_plain, fn_cipher, _key):
