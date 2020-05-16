@@ -49,32 +49,36 @@ def expand_key(key):
     return exp_key
 
 
-def run(file_plain, file_cipher, expanded_key):
-    block = file_plain.read(BLOCK_SIZE)
+def run(file_read, file_write, expanded_key, aes_fce):
+    block = file_read.read(BLOCK_SIZE)
 
     while len(block) == BLOCK_SIZE:
         # encryption of middle blocks
-        enc_block = aes_encrypt(bytearray(block), expanded_key, ROUNDS)
-        file_cipher.write(enc_block)
-        block = file_plain.read(BLOCK_SIZE)
+        enc_block = aes_fce(bytearray(block), expanded_key, ROUNDS)
+        file_write.write(enc_block)
+        block = file_read.read(BLOCK_SIZE)
 
     if len(block) % BLOCK_SIZE != 0 and len(block) != 0:
         block += bytes(BLOCK_SIZE - len(block))
         # encryption of final block
-        enc_block = aes_encrypt(bytearray(block), expanded_key, ROUNDS)
-        file_cipher.write(enc_block)
+        enc_block = aes_fce(bytearray(block), expanded_key, ROUNDS)
+        file_write.write(enc_block)
 
 
-def main(fn_plain, fn_cipher, _key):
+def main(mode, fn_read, fn_write, _key):
     try:
-        with open(fn_plain, "rb") as file_plain:
-            with open(fn_cipher, "wb") as file_cipher:
+        with open(fn_read, "rb") as file_read:
+            with open(fn_write, "wb") as file_write:
                 # hash key to 128 bit
                 key = md5(_key.encode()).digest()
                 # key = _key.encode()  # line for school project
 
+                # create subkeys
                 expanded_key = expand_key(bytearray(key))
-                run(file_plain, file_cipher, bytes(expanded_key))
+
+                # aes algorithm
+                aes_fce = aes_encrypt if mode == "e" else aes_decrypt
+                run(file_read, file_write, bytes(expanded_key), aes_fce)
 
     except FileNotFoundError as e:
         print("{} [{}]".format(e.strerror, e.filename))
@@ -83,8 +87,15 @@ def main(fn_plain, fn_cipher, _key):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 3:
-        main(sys.argv[1], sys.argv[2], sys.argv[3])
+    if len(sys.argv) > 4:
+
+        if sys.argv[1] in ("e", "d"):
+            main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+
+        else:
+            print("Wrong argument for mode. [{}]".format(sys.argv[1]))
+            print("Use: 'e' for encrypt\n     'd' for decrypt")
+
     else:
         print("Not enough arguments.")
-        print("Use: bitaes.py <plain-text-file-name> <file-w/cipher-name> <password>")
+        print("Use: bitaes.py <mode: e|d> <plain-text-file-name> <file-w/cipher-name> <password>")

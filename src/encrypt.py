@@ -12,7 +12,7 @@ def _shift_rows(state):
         # slice from the state
         row = [state[i+j*MTX_M] for j in range(MTX_M)]
 
-        # shift the slice
+        # shift the slice to the left
         row = row[i:] + row[:i]
 
         # insert shifted values
