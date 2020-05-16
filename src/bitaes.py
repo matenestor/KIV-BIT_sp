@@ -42,7 +42,7 @@ def expand_key(key):
     # remaining 160 B of expanded key, one subkey in each i loop
     for i in range(1, ROUNDS+2):
         # subkey size
-        sks = (i-1)*MTX_M*MTX_M
+        sks = (i-1)*BLOCK_SIZE
 
         for j in range(MTX_M):
             # first 4 B of subkey
@@ -63,14 +63,14 @@ def run(file_plain, file_cipher, expanded_key):
 
     while len(block) == BLOCK_SIZE:
         # encryption of middle blocks
-        enc_block = aes_encrypt(block, expanded_key, ROUNDS)
+        enc_block = aes_encrypt(bytearray(block), expanded_key, ROUNDS)
         file_cipher.write(enc_block)
         block = file_plain.read(BLOCK_SIZE)
 
     if len(block) % BLOCK_SIZE != 0 and len(block) != 0:
         block += bytes(BLOCK_SIZE - len(block))
         # encryption of final block
-        enc_block = aes_encrypt(block, expanded_key, ROUNDS)
+        enc_block = aes_encrypt(bytearray(block), expanded_key, ROUNDS)
         file_cipher.write(enc_block)
 
 
@@ -83,12 +83,12 @@ def main(fn_plain, fn_cipher, _key):
                 # sort by columns to 1D array
                 key = transpose(list(key))
                 expanded_key = expand_key(key)
-                run(file_plain, file_cipher, expanded_key)
+                run(file_plain, file_cipher, bytes(expanded_key))
 
     except FileNotFoundError as e:
         print("{} [{}]".format(e.strerror, e.filename))
-    except:
-        print("Unexpected error: {}".format(sys.exc_info()[0]))
+    # except:
+    #     print("Unexpected error: {}".format(sys.exc_info()[0]))
 
 
 if __name__ == '__main__':
