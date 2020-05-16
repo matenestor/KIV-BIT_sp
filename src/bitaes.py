@@ -4,8 +4,9 @@ from hashlib import md5
 import tables
 from tables import MTX_M, BLOCK_SIZE, SBOX, RCON
 from encrypt import aes_encrypt
+from decrypt import aes_decrypt
 
-ROUNDS = 9
+ROUNDS = 10
 
 
 def expand_key_core(col, idx):
@@ -30,14 +31,14 @@ def expand_key(key):
     exp_key = key[:]
 
     # remaining 160 B of expanded key, one subkey in each i loop
-    for i in range(1, ROUNDS+2):
+    for i in range(ROUNDS):
         # subkey size
-        sks = (i-1)*BLOCK_SIZE
+        sks = i*BLOCK_SIZE
 
         for j in range(MTX_M):
             # first 4 B of subkey
             if j == 0:
-                last_col = expand_key_core(exp_key[-MTX_M:], i)
+                last_col = expand_key_core(exp_key[-MTX_M:], i+1)
             # remaining 12 B of subkey
             else:
                 last_col = exp_key[-MTX_M:]
@@ -70,6 +71,8 @@ def main(fn_plain, fn_cipher, _key):
             with open(fn_cipher, "wb") as file_cipher:
                 # hash key to 128 bit
                 key = md5(_key.encode()).digest()
+                # key = _key.encode()  # line for school project
+
                 expanded_key = expand_key(bytearray(key))
                 run(file_plain, file_cipher, bytes(expanded_key))
 

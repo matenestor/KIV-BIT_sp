@@ -55,7 +55,7 @@ def aes_encrypt(state, key, rounds):
     _add_round_key(enc_state, key[:BLOCK_SIZE])
 
     # 9 middle rounds
-    for i in range(1, rounds+1):
+    for i in range(1, rounds):
         _sub_bytes(enc_state)
         _shift_rows(enc_state)
         _mix_columns(enc_state)
